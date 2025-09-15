@@ -28,14 +28,22 @@ class SupabaseClient:
         self.service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
         
         if not self.url or not self.anon_key:
-            raise ValueError("Supabase URL和Key必须在环境变量中设置")
+            logger.warning("Supabase URL和Key未在环境变量中设置，将使用游客模式")
+            self.client = None
+            return
         
-        # 创建客户端实例
-        self.client: Client = create_client(self.url, self.anon_key)
-        logger.info("Supabase客户端初始化成功")
+        try:
+            # 创建客户端实例
+            self.client: Client = create_client(self.url, self.anon_key)
+            logger.info("Supabase客户端初始化成功")
+        except Exception as e:
+            logger.error(f"Supabase客户端初始化失败: {e}")
+            self.client = None
     
     def get_user(self) -> Optional[Dict]:
         """获取当前登录用户"""
+        if not self.client:
+            return None
         try:
             user = self.client.auth.get_user()
             return user.user if user else None
@@ -113,9 +121,12 @@ class SupabaseClient:
     
     def get_experiments(self, limit: int = 100, offset: int = 0) -> List[Dict]:
         """获取实验记录列表"""
+        if not self.client:
+            return []
         try:
+            # 游客模式简化查询，避免表关系错误
             response = self.client.table("experiments")\
-                .select("*, devices(device_serial, device_model)")\
+                .select("*")\
                 .order("created_at", desc=True)\
                 .limit(limit)\
                 .offset(offset)\

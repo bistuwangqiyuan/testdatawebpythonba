@@ -7,7 +7,7 @@ import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
-from utils.supabase_client import get_supabase_client, require_auth, require_role
+from utils.supabase_client import get_supabase_client
 from utils.file_handler import FileHandler
 from utils.data_processor import DataProcessor
 import json
@@ -49,7 +49,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-@require_auth
 def main():
     # 获取Supabase客户端
     supabase = st.session_state.supabase
@@ -107,7 +106,7 @@ def main():
                         exp_data = {
                             "experiment_name": exp_name,
                             "experiment_type": exp_type,
-                            "operator_id": st.session_state.user.id
+                            "operator_id": st.session_state.user.get("id", "guest")
                         }
                         new_exp = supabase.insert_experiment(exp_data)
                         if new_exp:
@@ -161,7 +160,7 @@ def main():
                                     "file_size": file.size,
                                     "file_type": file.name.split('.')[-1],
                                     "experiment_id": experiment_id,
-                                    "uploaded_by": st.session_state.user.id
+                                    "uploaded_by": st.session_state.user.get("id", "guest")
                                 }
                                 supabase.client.table("files").insert(file_record).execute()
                                 
@@ -359,8 +358,12 @@ def main():
             st.warning("您没有权限管理文件")
             return
         
-        # 获取所有文件记录
-        files = supabase.client.table("files").select("*, experiments(experiment_name)").order("created_at", desc=True).execute()
+        # 获取所有文件记录（游客模式简化查询）
+        try:
+            files = supabase.client.table("files").select("*").order("created_at", desc=True).execute()
+        except Exception as e:
+            st.warning(f"无法获取文件记录: {e}")
+            files = type('obj', (object,), {'data': []})()
         
         if files.data:
             # 搜索和筛选

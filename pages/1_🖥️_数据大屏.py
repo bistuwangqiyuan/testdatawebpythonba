@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import time
-from utils.supabase_client import get_supabase_client, require_auth
+from utils.supabase_client import get_supabase_client
 from utils.visualization import Visualization
 from utils.data_processor import DataProcessor
 
@@ -48,7 +48,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-@require_auth
 def main():
     # 获取Supabase客户端
     supabase = st.session_state.supabase

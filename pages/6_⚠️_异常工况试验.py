@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import time
-from utils.supabase_client import get_supabase_client, require_auth, require_role
+from utils.supabase_client import get_supabase_client
 from utils.visualization import Visualization
 from utils.data_processor import DataProcessor
 
@@ -130,8 +130,6 @@ FAULT_TESTS = {
     }
 }
 
-@require_auth
-@require_role(['engineer', 'admin'])
 def main():
     # 获取Supabase客户端
     supabase = st.session_state.supabase
@@ -259,7 +257,7 @@ def main():
                             "experiment_name": experiment_name,
                             "experiment_type": "abnormal",
                             "device_id": device_id,
-                            "operator_id": st.session_state.user.id,
+                            "operator_id": st.session_state.user.get("id", "guest"),
                             "notes": f"异常测试: {', '.join([t[1]['name'] for t in selected_fault_tests])}"
                         }
                         experiment = supabase.insert_experiment(exp_data)

@@ -145,13 +145,16 @@ def load_css():
 # 初始化会话状态
 def init_session_state():
     if 'authenticated' not in st.session_state:
-        st.session_state.authenticated = False
+        st.session_state.authenticated = True  # 默认游客模式
     if 'user' not in st.session_state:
-        st.session_state.user = None
+        st.session_state.user = {"id": "guest", "email": "guest@example.com"}  # 游客用户
     if 'user_profile' not in st.session_state:
-        st.session_state.user_profile = None
+        st.session_state.user_profile = {"full_name": "游客用户", "role": "admin"}  # 给游客管理员权限
     if 'supabase' not in st.session_state:
-        st.session_state.supabase = get_supabase_client()
+        try:
+            st.session_state.supabase = get_supabase_client()
+        except Exception as e:
+            st.session_state.supabase = None  # 如果Supabase连接失败，设为None
 
 # 登录页面
 def login_page():
@@ -227,16 +230,12 @@ def main_page():
             st.markdown(f"🔑 **角色**: {st.session_state.user_profile.get('role', 'viewer')}")
             st.markdown("---")
         
+        # 游客模式提示
+        st.info("🎭 当前为游客模式，可以体验所有功能")
+        st.markdown("---")
+        
         # 导航菜单
         st.markdown("### 📊 功能模块")
-        
-        # 登出按钮
-        if st.button("🚪 退出登录", use_container_width=True):
-            st.session_state.supabase.sign_out()
-            st.session_state.authenticated = False
-            st.session_state.user = None
-            st.session_state.user_profile = None
-            st.rerun()
     
     # 主页内容
     st.title("🏠 系统主页")
@@ -297,7 +296,14 @@ def main_page():
     st.subheader("📋 最近实验记录")
     
     # 获取最近的实验记录
-    experiments = st.session_state.supabase.get_experiments(limit=5)
+    try:
+        if st.session_state.supabase:
+            experiments = st.session_state.supabase.get_experiments(limit=5)
+        else:
+            experiments = []
+    except Exception as e:
+        st.warning(f"无法连接到数据库: {str(e)}")
+        experiments = []
     
     if experiments:
         # 创建表格数据
@@ -309,12 +315,12 @@ def main_page():
                 "状态": exp.get('status', ''),
                 "结果": exp.get('result', ''),
                 "开始时间": exp.get('start_time', ''),
-                "设备": exp.get('devices', {}).get('device_serial', '') if exp.get('devices') else ''
+                "设备": exp.get('device_id', '未知设备')
             })
         
         st.dataframe(exp_data, use_container_width=True)
     else:
-        st.info("暂无实验记录")
+        st.info("暂无实验记录（游客模式）")
     
     # 系统信息
     with st.expander("ℹ️ 系统信息"):
@@ -330,10 +336,8 @@ def main():
     load_css()
     init_session_state()
     
-    if st.session_state.authenticated:
-        main_page()
-    else:
-        login_page()
+    # 直接显示主页面，游客模式
+    main_page()
 
 if __name__ == "__main__":
     main()

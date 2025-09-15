@@ -9,7 +9,7 @@ import numpy as np
 from datetime import datetime
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from utils.supabase_client import get_supabase_client, require_auth
+from utils.supabase_client import get_supabase_client
 from utils.visualization import Visualization
 from utils.data_processor import DataProcessor
 import time
@@ -121,7 +121,6 @@ class PVRSDSimulator:
         self.is_on = True
         self.temperature = 25
 
-@require_auth
 def main():
     # 获取Supabase客户端
     supabase = st.session_state.supabase
@@ -181,7 +180,7 @@ def main():
                     exp_data = {
                         "experiment_name": f"仿真实验_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
                         "experiment_type": "simulation",
-                        "operator_id": st.session_state.user.id,
+                        "operator_id": st.session_state.user.get("id", "guest"),
                         "notes": "虚拟仿真实验数据"
                     }
                     experiment = supabase.insert_experiment(exp_data)
