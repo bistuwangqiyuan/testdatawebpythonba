@@ -415,6 +415,10 @@ def main():
     
     # 仿真主循环
     if st.session_state.simulation_running:
+        # 初始化更新计数器
+        if 'chart_update_counter' not in st.session_state:
+            st.session_state.chart_update_counter = 0
+        
         # 生成仿真数据
         time_step = 0.1 / simulation_speed
         
@@ -449,8 +453,11 @@ def main():
         if len(st.session_state.simulation_data) > data_points:
             st.session_state.simulation_data.pop(0)
         
-        # 显示实时曲线
-        if len(st.session_state.simulation_data) > 10:
+        # 增加更新计数器
+        st.session_state.chart_update_counter += 1
+        
+        # 显示实时曲线 - 每50个时间步更新一次（约5秒）
+        if len(st.session_state.simulation_data) > 10 and st.session_state.chart_update_counter >= 50:
             df_sim = pd.DataFrame(st.session_state.simulation_data)
             
             # 创建多子图
@@ -521,9 +528,12 @@ def main():
             fig.update_yaxes(title_text="温度 (°C)", row=2, col=2, gridcolor='#2e2e2e')
             
             st.plotly_chart(fig, use_container_width=True)
+            
+            # 重置更新计数器
+            st.session_state.chart_update_counter = 0
         
-        # 延时刷新
-        time.sleep(time_step)
+        # 延时刷新 - 每5秒刷新一次图表
+        time.sleep(5.0)
         st.rerun()
     
     # 仿真分析工具
