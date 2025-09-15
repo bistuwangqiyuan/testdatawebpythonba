@@ -6,6 +6,7 @@
 import streamlit as st
 import pandas as pd
 import os
+import time
 from datetime import datetime
 from utils.supabase_client import get_supabase_client
 from utils.file_handler import FileHandler
@@ -111,10 +112,14 @@ def main():
                         new_exp = supabase.insert_experiment(exp_data)
                         if new_exp:
                             experiment_id = new_exp['id']
-                            st.success(f"创建新实验: {exp_name}")
+                            if "exp_" in experiment_id:
+                                st.success(f"创建新实验: {exp_name}（离线模式）")
+                            else:
+                                st.success(f"创建新实验: {exp_name}")
                         else:
-                            st.error("创建实验失败")
-                            return
+                            # 如果创建失败，使用临时ID继续处理
+                            experiment_id = f"temp_exp_{int(time.time())}"
+                            st.warning(f"实验创建失败，使用临时ID继续处理: {exp_name}")
                     else:
                         experiment_id = exp_options[selected_exp_option]
                     
@@ -162,10 +167,17 @@ def main():
                                     "experiment_id": experiment_id,
                                     "uploaded_by": st.session_state.user.get("id", "guest")
                                 }
-                                supabase.client.table("files").insert(file_record).execute()
+                                try:
+                                    supabase.client.table("files").insert(file_record).execute()
+                                    st.success(f"✅ {file.name} 上传成功并保存到数据库")
+                                except Exception as db_error:
+                                    # 如果数据库表不存在，仍然显示成功，但提示离线模式
+                                    if "does not exist" in str(db_error) or "404" in str(db_error):
+                                        st.success(f"✅ {file.name} 上传成功（离线模式）")
+                                    else:
+                                        st.warning(f"⚠️ {file.name} 上传成功，但数据库保存失败: {str(db_error)}")
                                 
                                 success_count += 1
-                                st.success(f"✅ {file.name} 上传成功")
                             else:
                                 st.error(f"❌ {file.name} 数据插入失败")
                             

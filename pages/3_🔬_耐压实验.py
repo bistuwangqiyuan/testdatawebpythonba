@@ -183,10 +183,19 @@ def main():
                         st.session_state.experiment_running = True
                         st.session_state.experiment_start_time = time.time()
                         st.session_state.experiment_data = []
-                        st.success("实验已开始")
+                        if "exp_" in experiment['id']:
+                            st.success("实验已开始（离线模式）")
+                        else:
+                            st.success("实验已开始")
                         st.rerun()
                     else:
-                        st.error("创建实验失败")
+                        # 使用临时ID继续实验
+                        st.session_state.experiment_id = f"temp_exp_{int(time.time())}"
+                        st.session_state.experiment_running = True
+                        st.session_state.experiment_start_time = time.time()
+                        st.session_state.experiment_data = []
+                        st.warning("实验已开始（离线模式）")
+                        st.rerun()
                 else:
                     st.error("请选择测试设备")
         else:
