@@ -152,9 +152,14 @@ def init_session_state():
         st.session_state.user_profile = {"full_name": "游客用户", "role": "admin"}  # 给游客管理员权限
     if 'supabase' not in st.session_state:
         try:
-            st.session_state.supabase = get_supabase_client()
+            supabase_client = get_supabase_client()
+            if supabase_client is None:
+                raise Exception("Supabase client is None")
+            st.session_state.supabase = supabase_client
         except Exception as e:
-            st.session_state.supabase = None  # 如果Supabase连接失败，设为None
+            # 如果Supabase连接失败，创建一个模拟客户端
+            from utils.supabase_client import SupabaseClient
+            st.session_state.supabase = SupabaseClient(None)  # 传入None表示离线模式
 
 # 登录页面
 def login_page():

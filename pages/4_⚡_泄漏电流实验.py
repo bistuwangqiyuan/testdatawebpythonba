@@ -59,7 +59,7 @@ st.markdown("""
 
 def main():
     # 获取Supabase客户端
-    supabase = st.session_state.supabase
+    supabase = st.session_state.get('supabase')
     
     # 页面标题
     st.markdown("""
@@ -200,7 +200,7 @@ def main():
                         "experiment_name": experiment_name,
                         "experiment_type": "leakage",
                         "device_id": device_id,
-                        "operator_id": st.session_state.user.get("id", "guest"),
+                        "operator_id": st.session_state.get("user", {}).get("id", "guest"),
                         "notes": f"测试阶段: {', '.join([p['name'] for p in selected_phases])}"
                     }
                     experiment = supabase.insert_experiment(exp_data)

@@ -50,7 +50,7 @@ st.markdown("""
 
 def main():
     # 获取Supabase客户端
-    supabase = st.session_state.supabase
+    supabase = st.session_state.get('supabase')
     
     # 页面标题
     st.markdown("""

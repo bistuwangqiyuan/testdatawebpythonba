@@ -123,7 +123,7 @@ class PVRSDSimulator:
 
 def main():
     # 获取Supabase客户端
-    supabase = st.session_state.supabase
+    supabase = st.session_state.get('supabase')
     
     # 页面标题
     st.markdown("""
@@ -180,7 +180,7 @@ def main():
                     exp_data = {
                         "experiment_name": f"仿真实验_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
                         "experiment_type": "simulation",
-                        "operator_id": st.session_state.user.get("id", "guest"),
+                        "operator_id": st.session_state.get("user", {}).get("id", "guest"),
                         "notes": "虚拟仿真实验数据"
                     }
                     experiment = supabase.insert_experiment(exp_data)

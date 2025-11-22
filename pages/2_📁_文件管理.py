@@ -52,7 +52,7 @@ st.markdown("""
 
 def main():
     # 获取Supabase客户端
-    supabase = st.session_state.supabase
+    supabase = st.session_state.get('supabase')
     
     # 页面标题
     st.title("📁 数据文件管理")
@@ -107,7 +107,7 @@ def main():
                         exp_data = {
                             "experiment_name": exp_name,
                             "experiment_type": exp_type,
-                            "operator_id": st.session_state.user.get("id", "guest")
+                            "operator_id": st.session_state.get("user", {}).get("id", "guest")
                         }
                         new_exp = supabase.insert_experiment(exp_data)
                         if new_exp:
@@ -165,7 +165,7 @@ def main():
                                     "file_size": file.size,
                                     "file_type": file.name.split('.')[-1],
                                     "experiment_id": experiment_id,
-                                    "uploaded_by": st.session_state.user.get("id", "guest")
+                                    "uploaded_by": st.session_state.get("user", {}).get("id", "guest")
                                 }
                                 try:
                                     supabase.client.table("files").insert(file_record).execute()
